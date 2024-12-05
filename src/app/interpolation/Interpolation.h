@@ -7,13 +7,17 @@
 
 
 #include <glm/glm.hpp>
+#include <vector>
 #include "InterpolationType.h"
 #include "Frame.h"
 
 class Interpolation {
 public:
-    template<InterpolationType type>
-    glm::mat4 interpolate(float t, Frame beginFrame, Frame endFrame);
+    template<InterpolationType type> glm::mat4 interpolate(float t, Frame beginFrame, Frame endFrame);
+    glm::mat4 interpolate(InterpolationType type, float t, Frame beginFrame, Frame endFrame);
+
+    std::vector<glm::mat4> generateInBetweens(InterpolationType type, int count, Frame beginFrame, Frame endFrame);
+
 private:
     glm::vec3 interpolateTranslation(float t, glm::vec3 begin, glm::vec3 end);
 

@@ -52,7 +52,14 @@ struct AppContext {
     glm::mat4 leftTransformation;
     glm::mat4 rightTransformation;
 
+    std::vector<glm::mat4> inBetweenTransformationsLeft;
+    std::vector<glm::mat4> inBetweenTransformationsRight;
+    int inBetweenCount;
+
     float t;
+    float simulationSpeed;
+    bool running;
+    float lastFrameTimeS;
 };
 
 #endif //OPENGL_TEMPLATE_APPCONTEXT_H

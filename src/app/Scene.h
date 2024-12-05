@@ -15,7 +15,9 @@ public:
     void update();
     void render();
 
-    void render(FrameBufferManager &frameBufferManager, glm::mat4 transformation);
+    void render(FrameBufferManager &frameBufferManager, glm::mat4 transformation, std::vector<glm::mat4> inBetweens);
+
+    void renderAxis(glm::mat4 mat1, glm::mat4 mat2, glm::mat4 mat3, glm::mat4 mat4, float alpha);
 };
 
 

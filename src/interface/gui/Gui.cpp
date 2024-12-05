@@ -102,18 +102,7 @@ void Gui::render() {
     ImGui::PopItemWidth();
     modified |= quatEndModified | quatBeginModified;
 
-    ImGui::Text("Interpolation Left");
-    ImGui::Combo("##Interpolation Left", reinterpret_cast<int*>(&appContext.interpolationLeft), items, 3);
-    ImGui::Text("Interpolation Right");
-    ImGui::Combo("##Interpolation Right", reinterpret_cast<int*>(&appContext.interpolationRight), items, 3);
-
-    modified |= ImGui::SliderFloat("t", &appContext.t, 0, 1);
-    if(ImGui::Button("Run")) {
-
-    }
-
     if(eulerBeginModified) {
-//        appContext.beginFrame.quaternion = glm::quat(appContext.beginFrame.euler);
         auto z = angleAxis(glm::radians(appContext.beginFrame.euler.z), glm::vec3(0,0,1));
         auto y = angleAxis(glm::radians(appContext.beginFrame.euler.y), glm::vec3(0,1,0));
         auto x = angleAxis(glm::radians(appContext.beginFrame.euler.x), glm::vec3(1,0,0));
@@ -123,7 +112,7 @@ void Gui::render() {
         auto z = angleAxis(glm::radians(appContext.endFrame.euler.z), glm::vec3(0,0,1));
         auto y = angleAxis(glm::radians(appContext.endFrame.euler.y), glm::vec3(0,1,0));
         auto x = angleAxis(glm::radians(appContext.endFrame.euler.x), glm::vec3(1,0,0));
-        appContext.endFrame.quaternion = glm::normalize(x * y * z);
+        appContext.endFrame.quaternion = glm::normalize(z * y * x);
     }
     if(quatBeginModified) {
         appContext.beginFrame.quaternion = glm::normalize(appContext.beginFrame.quaternion);
@@ -135,29 +124,31 @@ void Gui::render() {
         glm::vec3 euler = glm::eulerAngles(appContext.endFrame.quaternion);
         appContext.endFrame.euler = glm::degrees(euler);
     }
-    if(modified)
-        refreshInterpolation();
+
+    ImGui::SeparatorText("Interpolations");
+    ImGui::Text("Interpolation Left");
+    modified |= ImGui::Combo("##Interpolation Left", reinterpret_cast<int*>(&appContext.interpolationLeft), items, 3);
+    ImGui::Text("Interpolation Right");
+    modified |= ImGui::Combo("##Interpolation Right", reinterpret_cast<int*>(&appContext.interpolationRight), items, 3);
+
+    ImGui::SeparatorText("Simulation");
+    modified |= ImGui::SliderFloat("t", &appContext.t, 0, 1);
+    ImGui::DragFloat("Speed", &appContext.simulationSpeed, 0.01, 0.1, 5);
+    modified |= ImGui::InputInt("In-betweens", &appContext.inBetweenCount, 1);
+    if(ImGui::Button(appContext.running? "Stop": "Start")) {
+        if(!appContext.running && appContext.t == 1) appContext.t = 0;
+        appContext.running = !appContext.running;
+    }
 
     ImGui::End();
+
+    if(modified)
+        refreshInterpolation();
 }
 
 void Gui::refreshInterpolation() {
-    appContext.leftTransformation = interpolate(appContext.interpolationLeft);
-    appContext.rightTransformation = interpolate(appContext.interpolationRight);
-}
-
-glm::mat4 Gui::interpolate(InterpolationType type) {
-    switch (type) {
-        case Euler:
-            return appContext.interpolation.interpolate<Euler>(appContext.t, appContext.beginFrame, appContext.endFrame);
-        case QuaternionLinear:
-            return appContext.interpolation.interpolate<QuaternionLinear>(appContext.t, appContext.beginFrame, appContext.endFrame);
-        case QuaternionSpherical:
-            return appContext.interpolation.interpolate<QuaternionSpherical>(appContext.t, appContext.beginFrame, appContext.endFrame);
-    }
-}
-
-void Gui::renderLightUI(PointLight &light) {
-    ImGui::ColorPicker3("Light Color", glm::value_ptr(light.color));
-    ImGui::DragFloat3("Light Position", glm::value_ptr(light.position), 0.001f);
+    appContext.leftTransformation = appContext.interpolation.interpolate(appContext.interpolationLeft, appContext.t, appContext.beginFrame, appContext.endFrame);
+    appContext.rightTransformation = appContext.interpolation.interpolate(appContext.interpolationRight, appContext.t, appContext.beginFrame, appContext.endFrame);
+    appContext.inBetweenTransformationsLeft = appContext.interpolation.generateInBetweens(appContext.interpolationLeft, appContext.inBetweenCount, appContext.beginFrame, appContext.endFrame);
+    appContext.inBetweenTransformationsRight = appContext.interpolation.generateInBetweens(appContext.interpolationRight, appContext.inBetweenCount, appContext.beginFrame, appContext.endFrame);
 }

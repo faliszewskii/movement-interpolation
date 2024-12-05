@@ -6,6 +6,7 @@
 #include "Interpolation.h"
 #include <glm/gtx/quaternion.hpp>
 #include <numbers>
+#include <algorithm>
 #include "glm/gtx/euler_angles.hpp"
 
 glm::quat Interpolation::slerp(float t, glm::quat a, glm::quat b)
@@ -105,6 +106,32 @@ glm::mat4 Interpolation::combineTransformation(glm::vec3 translation, glm::quat 
     m = glm::translate(m, translation);
     m = m * glm::toMat4(quatRotation);
     return m;
+}
+
+glm::mat4 Interpolation::interpolate(InterpolationType type, float t, Frame beginFrame, Frame endFrame) {
+    switch (type) {
+        case Euler:
+            return interpolate<Euler>(t, beginFrame, endFrame);
+        case QuaternionLinear:
+            return interpolate<QuaternionLinear>(t, beginFrame, endFrame);
+        case QuaternionSpherical:
+            return interpolate<QuaternionSpherical>(t, beginFrame, endFrame);
+    }
+}
+
+std::vector<glm::mat4>
+Interpolation::generateInBetweens(InterpolationType type, int count, Frame beginFrame, Frame endFrame) {
+    std::vector<glm::mat4> inBetweens;
+    if(count == 0) return inBetweens;
+    std::vector<float> ts(count - 1);
+    int c = 0;
+    std::ranges::generate(ts, [c, count] mutable { return (float(c++ + 1) / float(count - 1)); });
+    ts.insert(ts.begin(), 0);
+
+    for(auto t : ts) {
+        inBetweens.push_back(interpolate(type, t, beginFrame, endFrame));
+    }
+    return inBetweens;
 }
 
 
