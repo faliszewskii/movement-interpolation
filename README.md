@@ -1,4 +1,4 @@
-# opengl-template
-Template for OpenGL applications
+# Movement interpolation
+Application for comparing different types of movement interpolation including linear interpolation of euler angles and quaternions and spherical quaternion interpolation (slerp).
 
-![Zrzut ekranu z 2024-12-02 10-16-58](https://github.com/user-attachments/assets/55e4653c-3294-43f1-bc95-76a86d24753a)
+![image](https://github.com/user-attachments/assets/4cce61c2-3f0e-441c-916a-f6158f41f6f7)
