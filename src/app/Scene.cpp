@@ -6,11 +6,11 @@
 #include "../interface/camera/CameraAnchor.h"
 
 Scene::Scene(AppContext &appContext) : appContext(appContext) {
-    appContext.camera = std::make_unique<CameraAnchor>(1920, 1080, glm::vec3(0.0f, 3.0f, 3.0f), glm::vec3(0.f), glm::vec3(-M_PI / 4, 0, 0));
-    appContext.frameBufferManager = std::make_unique<FrameBufferManager>();
-    appContext.frameBufferManager->create_buffers(appContext.camera->screenWidth, appContext.camera->screenHeight);
-
-    // TODO --- Initialization of the app state goes here.
+    appContext.camera = std::make_unique<CameraAnchor>(1920/2, 1080, glm::vec3(0.0f, 3.0f, 3.0f), glm::vec3(0.f), glm::vec3(-M_PI / 4, 0, 0));
+    appContext.frameBufferManagerLeft = std::make_unique<FrameBufferManager>();
+    appContext.frameBufferManagerLeft->create_buffers(appContext.camera->screenWidth, appContext.camera->screenHeight);
+    appContext.frameBufferManagerRight = std::make_unique<FrameBufferManager>();
+    appContext.frameBufferManagerRight->create_buffers(appContext.camera->screenWidth, appContext.camera->screenHeight);
 
     appContext.phongShader = std::make_unique<Shader>(Shader::createTraditionalShader(
             "../res/shaders/phong/phong.vert", "../res/shaders/phong/phong.frag"));
@@ -20,29 +20,47 @@ Scene::Scene(AppContext &appContext) : appContext(appContext) {
     appContext.quad = std::make_unique<Quad>();
     appContext.light = std::make_unique<PointLight>();
     appContext.light->position = {-0.5f , 0.25f, 0.25f};
-    appContext.lightBulb = std::make_unique<Point>();
 
     appContext.bunny = std::make_unique<Model>("../res/models/stanfordBunny.obj");
+
+    appContext.axisR = std::make_unique<Cylinder>();
+    appContext.axisG = std::make_unique<Cylinder>();
+    appContext.axisB = std::make_unique<Cylinder>();
+
+    appContext.grid = std::make_unique<Grid>();
+
+    appContext.t = 0;
+    appContext.leftTransformation = glm::identity<glm::mat4>();
+    appContext.rightTransformation = glm::identity<glm::mat4>();
+
+    appContext.interpolationRight = InterpolationType::QuaternionLinear;
+    appContext.interpolationLeft = InterpolationType::Euler;
 }
 
 void Scene::update() {
-    // TODO --- Here goes scene data update.
-    appContext.lightBulb->position = appContext.light->position;
-    appContext.lightBulb->color = glm::vec4(appContext.light->color, 1);
+
+//    appContext.interpolation();
 }
 
-void Scene::render() {
-    appContext.frameBufferManager->bind();
+void Scene::render(FrameBufferManager &frameBufferManager, glm::mat4 transformation) {
+    frameBufferManager.bind();
 
-    auto quadModel = glm::identity<glm::mat4>();
-    quadModel = glm::rotate(quadModel, -float(std::numbers::pi / 2), glm::vec3(1, 0, 0));
+    auto modelR = glm::identity<glm::mat4>();
+    modelR = glm::rotate(modelR, float(-std::numbers::pi/2), glm::vec3(0, 0, 1));
+    modelR = glm::translate(modelR, glm::vec3(0, 0.5, 0));
 
-    auto bunnyModel = glm::identity<glm::mat4>();
-    bunnyModel = glm::scale(bunnyModel, glm::vec3(2));
+    auto modelG = glm::identity<glm::mat4>();
+    modelG = glm::translate(modelG, glm::vec3(0, 0.5, 0));
 
-    // TODO --- Here goes scene render.
+    auto modelB = glm::identity<glm::mat4>();
+    modelB = glm::rotate(modelB, float(std::numbers::pi/2), glm::vec3(1, 0, 0));
+    modelB = glm::translate(modelB, glm::vec3(0, 0.5, 0));
+
+    modelR = transformation * modelR;
+    modelG = transformation * modelG;
+    modelB = transformation * modelB;
+
     appContext.phongShader->use();
-    appContext.phongShader->setUniform("model", quadModel);
     appContext.phongShader->setUniform("viewPos", appContext.camera->getViewPosition());
     appContext.phongShader->setUniform("view", appContext.camera->getViewMatrix());
     appContext.phongShader->setUniform("projection", appContext.camera->getProjectionMatrix());
@@ -50,15 +68,24 @@ void Scene::render() {
     appContext.phongShader->setUniform("material.albedo", glm::vec4(1.0f, 1.0f, 0.0f, 1.0f));
     appContext.phongShader->setUniform("material.shininess", 256.f);
     appContext.light->setupPointLight(*appContext.phongShader);
-    appContext.quad->render();
-    appContext.phongShader->setUniform("material.albedo", glm::vec4(1.0f, 0.5f, 0.5f, 1.0f));
-    appContext.phongShader->setUniform("model", bunnyModel);
-    appContext.bunny->render();
+    appContext.phongShader->setUniform("model", modelR);
+    appContext.phongShader->setUniform("material.albedo", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+    appContext.axisR->render();
+    appContext.phongShader->setUniform("model", modelG);
+    appContext.phongShader->setUniform("material.albedo", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
+    appContext.axisG->render();
+    appContext.phongShader->setUniform("model", modelB);
+    appContext.phongShader->setUniform("material.albedo", glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+    appContext.axisB->render();
 
-    appContext.pointShader->use();
-    appContext.pointShader->setUniform("view", appContext.camera->getViewMatrix());
-    appContext.pointShader->setUniform("projection", appContext.camera->getProjectionMatrix());
-    appContext.lightBulb->render(*appContext.pointShader);
+    glDisable(GL_CULL_FACE);
+    appContext.grid->render(appContext);
+    glEnable(GL_CULL_FACE);
 
-    appContext.frameBufferManager->unbind();
+    frameBufferManager.unbind();
+}
+
+void Scene::render() {
+    render(*appContext.frameBufferManagerLeft, appContext.leftTransformation);
+    render(*appContext.frameBufferManagerRight, appContext.rightTransformation);
 }

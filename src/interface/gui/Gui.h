@@ -17,6 +17,14 @@ public:
     void render();
 
     void renderLightUI(PointLight &light);
+
+    void InterpolationMenu();
+
+    void InterpolationMenu(string side);
+
+    glm::mat4 interpolate(InterpolationType type);
+
+    void refreshInterpolation();
 };
 
 

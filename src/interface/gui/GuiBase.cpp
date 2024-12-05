@@ -89,9 +89,18 @@ void GuiBase::showScene() {
     ImVec2 viewportPanelSize = ImGui::GetContentRegionAvail();
 
     // add rendered texture to ImGUI scene window
-    uint64_t textureID = appContext.frameBufferManager->get_texture();
-    ImVec2 canvas_sz = ImVec2{viewportPanelSize.x, viewportPanelSize.y};
-    ImGui::Image(reinterpret_cast<void *>(textureID), canvas_sz, ImVec2{0, 1}, ImVec2{1, 0});
+    uint64_t textureIDLeft = appContext.frameBufferManagerLeft->get_texture();
+    uint64_t textureIDRight = appContext.frameBufferManagerRight->get_texture();
+    ImVec2 canvas_sz = ImVec2{viewportPanelSize.x/2, viewportPanelSize.y};
+
+    ImGui::BeginChild("ChildL", ImVec2(canvas_sz.x, canvas_sz.y), ImGuiChildFlags_None, ImGuiWindowFlags_None);
+    ImGui::Image(reinterpret_cast<void *>(textureIDLeft), canvas_sz, ImVec2{0, 1}, ImVec2{1, 0});
+    ImGui::EndChild();
+    ImGui::SameLine();
+    ImGui::BeginChild("ChildR", ImVec2(canvas_sz.x, canvas_sz.y), ImGuiChildFlags_None, ImGuiWindowFlags_None);
+    ImGui::Image(reinterpret_cast<void *>(textureIDRight), canvas_sz, ImVec2{0, 1}, ImVec2{1, 0});
+    ImGui::EndChild();
+
     ImGui::End();
 
 }

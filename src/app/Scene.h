@@ -14,6 +14,8 @@ public:
     explicit Scene(AppContext &appContext);
     void update();
     void render();
+
+    void render(FrameBufferManager &frameBufferManager, glm::mat4 transformation);
 };
 
 

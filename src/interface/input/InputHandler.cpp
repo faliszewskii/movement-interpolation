@@ -106,6 +106,6 @@ void InputHandler::scrollCallback(GLFWwindow *window, double xoffset, double yof
 }
 
 void InputHandler::windowResize (GLFWwindow *window, int width, int height) {
-    appContext.camera->resize(width, height); // NOLINT(*-narrowing-conversions)
-    appContext.frameBufferManager->create_buffers(appContext.camera->screenWidth, appContext.camera->screenHeight);
+//    appContext.camera->resize(width, height); // NOLINT(*-narrowing-conversions)
+//    appContext.frameBufferManager->create_buffers(appContext.camera->screenWidth, appContext.camera->screenHeight);
 }

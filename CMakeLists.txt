@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.28)
-project(opengl_template)
+project(movement-interpolation)
 
 set(CMAKE_CXX_STANDARD 26)
 
@@ -69,12 +69,20 @@ else()
     set(GLAD_GLEW
         dep/glew/glad.c
         dep/glew/glew_glfw.h
+            src/app/entity/cylinder/Cylinder.h
+            src/app/entity/cylinder/Cylinder.cpp
+            src/app/entity/grid/Grid.h
+            src/app/entity/grid/Grid.cpp
+            src/app/interpolation/InterpolationType.h
+            src/app/interpolation/Interpolation.cpp
+            src/app/interpolation/Interpolation.h
+            src/app/interpolation/Frame.h
     )
 
 endif()
 
 # Add executables
-add_executable(OpenGL_Template
+add_executable(movement-interpolation
         # Dependencies
         ${IMGUI_SRC}
         # Application
@@ -86,7 +94,7 @@ add_executable(OpenGL_Template
 
 # Link libraries
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")             # macOS
-    target_link_libraries(OpenGL_Template
+    target_link_libraries(movement-interpolation
             ${CMAKE_SOURCE_DIR}/dep/lib/libglfw.3.4.dylib
             ${CMAKE_SOURCE_DIR}/dep/lib/libGLEW.2.2.0.dylib
             "-framework OpenGL"
@@ -99,13 +107,13 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")        # Windows
     find_package(glm CONFIG REQUIRED)
     find_package(OpenGL REQUIRED)
     include_directories( ${OPENGL_INCLUDE_DIRS})
-    target_link_libraries(OpenGL_Template PRIVATE
+    target_link_libraries(movement-interpolation PRIVATE
             glm::glm
             glfw
             ${OPENGL_LIBRARIES}
     )
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")          # Linux
-    target_link_libraries(OpenGL_Template
+    target_link_libraries(movement-interpolation
             -lglfw
             -lGLEW
             -lGL
