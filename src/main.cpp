@@ -25,15 +25,17 @@
 #include "../libs/emscripten/emscripten_mainloop_stub.h"
 #endif
 
+#define GLM_ENABLE_EXPERIMENTAL
+
 static void glfw_error_callback(int error, const char* description)
 {
-    fprintf(stderr, "GLFW Error %d: %s\n", error, description);
+    // fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 
 void GLAPIENTRY MessageCallback( GLenum source,GLenum type,GLuint id,GLenum severity,GLsizei length,const GLchar* message,const void* userParam ) {
-    fprintf( stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
-             ( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" ),
-             type, severity, message );
+    // fprintf( stderr, "GL CALLBACK: %s type = 0x%x, severity = 0x%x, message = %s\n",
+    //          ( type == GL_DEBUG_TYPE_ERROR ? "** GL ERROR **" : "" ),
+    //          type, severity, message );
 }
 
 // Main code

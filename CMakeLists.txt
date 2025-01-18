@@ -58,7 +58,16 @@ set(APP_SRC
         src/app/Scene.h
         src/app/entity/light/PointLight.h
         src/app/entity/point/Point.h
-        src/opengl/model/Model.h)
+        src/app/entity/cylinder/Cylinder.h
+        src/app/entity/cylinder/Cylinder.cpp
+        src/app/entity/grid/Grid.h
+        src/app/entity/grid/Grid.cpp
+        src/app/interpolation/InterpolationType.h
+        src/app/interpolation/Interpolation.cpp
+        src/app/interpolation/Interpolation.h
+        src/app/interpolation/Frame.h
+        src/app/robot/Robot.cpp
+        src/app/robot/Robot.h)
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     set(GLAD_GLEW
@@ -69,14 +78,6 @@ else()
     set(GLAD_GLEW
         dep/glew/glad.c
         dep/glew/glew_glfw.h
-            src/app/entity/cylinder/Cylinder.h
-            src/app/entity/cylinder/Cylinder.cpp
-            src/app/entity/grid/Grid.h
-            src/app/entity/grid/Grid.cpp
-            src/app/interpolation/InterpolationType.h
-            src/app/interpolation/Interpolation.cpp
-            src/app/interpolation/Interpolation.h
-            src/app/interpolation/Frame.h
     )
 
 endif()
@@ -122,6 +123,5 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")          # Linux
             -lXrandr
             -lXi
             -ldl
-            assimp
     )
 endif()

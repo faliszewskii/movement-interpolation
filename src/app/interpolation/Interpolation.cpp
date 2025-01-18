@@ -1,7 +1,7 @@
 //
 // Created by faliszewskii on 04.12.24.
 //
-
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/detail/type_quat.hpp>
 #include "Interpolation.h"
 #include <glm/gtx/quaternion.hpp>

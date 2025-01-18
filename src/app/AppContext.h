@@ -18,6 +18,7 @@
 #include "interpolation/InterpolationType.h"
 #include "interpolation/Interpolation.h"
 #include "interpolation/Frame.h"
+#include "robot/Robot.h"
 
 struct AppContext {
     AppContext() = default;
@@ -60,6 +61,16 @@ struct AppContext {
     float simulationSpeed;
     bool running;
     float lastFrameTimeS;
+
+    // Puma
+
+    enum {
+        AxisMode,
+        RobotMode
+    } chosenMode = RobotMode;
+
+    std::unique_ptr<Robot> robotL;
+    std::unique_ptr<Robot> robotR;
 };
 
 #endif //OPENGL_TEMPLATE_APPCONTEXT_H

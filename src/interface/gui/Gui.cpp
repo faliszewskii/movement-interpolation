@@ -1,13 +1,12 @@
 //
 // Created by faliszewskii on 16.06.24.
 //
-
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/euler_angles.hpp>
 #include "Gui.h"
 #include "imgui.h"
-#include <glm/gtx/string_cast.hpp>
 
 Gui::Gui(AppContext &appContext) : appContext(appContext) {}
 
@@ -46,6 +45,15 @@ void Gui::render() {
     bool quatBeginModified = false;
     bool eulerEndModified = false;
     bool quatEndModified = false;
+
+
+    const char* itemsM[] = {
+        "Axis interpolation",
+        "Robot interpolation"
+};
+    ImGui::Text("Chosen Mode");
+    ImGui::Combo("##Mode", reinterpret_cast<int*>(&appContext.chosenMode), itemsM, 2);
+
 
     ImGui::SeparatorText("Translation");
     ImGui::PushItemWidth(80);
@@ -125,25 +133,43 @@ void Gui::render() {
         appContext.endFrame.euler = glm::degrees(euler);
     }
 
-    ImGui::SeparatorText("Interpolations");
-    ImGui::Text("Interpolation Left");
-    modified |= ImGui::Combo("##Interpolation Left", reinterpret_cast<int*>(&appContext.interpolationLeft), items, 3);
-    ImGui::Text("Interpolation Right");
-    modified |= ImGui::Combo("##Interpolation Right", reinterpret_cast<int*>(&appContext.interpolationRight), items, 3);
+    if(appContext.chosenMode == AppContext::AxisMode) {
+        ImGui::SeparatorText("Interpolations");
+        ImGui::Text("Interpolation Left");
+        modified |= ImGui::Combo("##Interpolation Left", reinterpret_cast<int*>(&appContext.interpolationLeft), items, 3);
+        ImGui::Text("Interpolation Right");
+        modified |= ImGui::Combo("##Interpolation Right", reinterpret_cast<int*>(&appContext.interpolationRight), items, 3);
 
-    ImGui::SeparatorText("Simulation");
-    modified |= ImGui::SliderFloat("t", &appContext.t, 0, 1);
-    ImGui::DragFloat("Speed", &appContext.simulationSpeed, 0.01, 0.1, 5);
-    modified |= ImGui::InputInt("In-betweens", &appContext.inBetweenCount, 1);
-    if(ImGui::Button(appContext.running? "Stop": "Start")) {
-        if(!appContext.running && appContext.t == 1) appContext.t = 0;
-        appContext.running = !appContext.running;
+        ImGui::SeparatorText("Simulation");
+        modified |= ImGui::SliderFloat("t", &appContext.t, 0, 1);
+        ImGui::DragFloat("Speed", &appContext.simulationSpeed, 0.01, 0.1, 5);
+        modified |= ImGui::InputInt("In-betweens", &appContext.inBetweenCount, 1);
+        if(ImGui::Button(appContext.running? "Stop": "Start")) {
+            if(!appContext.running && appContext.t == 1) appContext.t = 0;
+            appContext.running = !appContext.running;
+        }
+
+        if(modified)
+            refreshInterpolation();
+    } else {
+        ImGui::SeparatorText("Simulation");
+        modified |= ImGui::SliderFloat("t", &appContext.t, 0, 1);
+        ImGui::DragFloat("Speed", &appContext.simulationSpeed, 0.01, 0.1, 5);
+        if(ImGui::Button(appContext.running? "Stop": "Start")) {
+            if(!appContext.running && appContext.t == 1) appContext.t = 0;
+            appContext.running = !appContext.running;
+        }
+
+        if(modified) {
+            appContext.leftTransformation = appContext.interpolation.interpolate(appContext.interpolationLeft, appContext.t, appContext.beginFrame, appContext.endFrame);
+            appContext.rightTransformation = appContext.interpolation.interpolate(appContext.interpolationRight, appContext.t, appContext.beginFrame, appContext.endFrame);
+
+            appContext.robotR->interpolate(appContext.t, appContext.beginFrame, appContext.endFrame);
+            appContext.robotL->interpolateParams(appContext.t, appContext.beginFrame, appContext.endFrame);
+        }
     }
 
     ImGui::End();
-
-    if(modified)
-        refreshInterpolation();
 }
 
 void Gui::refreshInterpolation() {

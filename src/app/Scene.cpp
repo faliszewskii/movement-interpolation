@@ -3,6 +3,9 @@
 //
 
 #include "Scene.h"
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/quaternion.hpp>
+
 #include "../interface/camera/CameraAnchor.h"
 
 Scene::Scene(AppContext &appContext) : appContext(appContext) {
@@ -21,7 +24,6 @@ Scene::Scene(AppContext &appContext) : appContext(appContext) {
     appContext.light = std::make_unique<PointLight>();
     appContext.light->position = {-0.5f , 0.25f, 0.25f};
 
-    appContext.bunny = std::make_unique<Model>("../res/models/stanfordBunny.obj");
 
     appContext.axisR = std::make_unique<Cylinder>();
     appContext.axisG = std::make_unique<Cylinder>();
@@ -40,6 +42,16 @@ Scene::Scene(AppContext &appContext) : appContext(appContext) {
     appContext.simulationSpeed = 0.5;
     appContext.lastFrameTimeS = glfwGetTime();
     appContext.inBetweenCount = 0;
+
+    // Puma
+
+    appContext.robotL = std::make_unique<Robot>();
+    appContext.robotR = std::make_unique<Robot>();
+
+    appContext.beginFrame.translation.x = 2;
+    appContext.beginFrame.translation.z = 2;
+    appContext.endFrame.translation.x = 2;
+    appContext.endFrame.translation.z = 2;
 }
 
 void Scene::update() {
@@ -54,24 +66,15 @@ void Scene::update() {
         appContext.leftTransformation = appContext.interpolation.interpolate(appContext.interpolationLeft, appContext.t, appContext.beginFrame, appContext.endFrame);
         appContext.rightTransformation = appContext.interpolation.interpolate(appContext.interpolationRight, appContext.t, appContext.beginFrame, appContext.endFrame);
         appContext.lastFrameTimeS = timeS;
+        appContext.robotR->interpolate(appContext.t, appContext.beginFrame, appContext.endFrame);
+        appContext.robotL->interpolateParams(appContext.t, appContext.beginFrame, appContext.endFrame);
     } else {
         appContext.lastFrameTimeS = glfwGetTime();
     }
 }
 
-void Scene::render(FrameBufferManager &frameBufferManager, glm::mat4 transformation, std::vector<glm::mat4> inBetweens) {
+void Scene::render(FrameBufferManager &frameBufferManager, glm::mat4 transformation, std::vector<glm::mat4> &inBetweens, Robot& robot) {
     frameBufferManager.bind();
-
-    auto modelR = glm::identity<glm::mat4>();
-    modelR = glm::rotate(modelR, float(-std::numbers::pi/2), glm::vec3(0, 0, 1));
-    modelR = glm::translate(modelR, glm::vec3(0, 0.5, 0));
-
-    auto modelG = glm::identity<glm::mat4>();
-    modelG = glm::translate(modelG, glm::vec3(0, 0.5, 0));
-
-    auto modelB = glm::identity<glm::mat4>();
-    modelB = glm::rotate(modelB, float(std::numbers::pi/2), glm::vec3(1, 0, 0));
-    modelB = glm::translate(modelB, glm::vec3(0, 0.5, 0));
 
     appContext.phongShader->use();
     appContext.phongShader->setUniform("viewPos", appContext.camera->getViewPosition());
@@ -82,9 +85,23 @@ void Scene::render(FrameBufferManager &frameBufferManager, glm::mat4 transformat
     appContext.phongShader->setUniform("material.shininess", 256.f);
     appContext.light->setupPointLight(*appContext.phongShader);
 
-    renderAxis(modelR, modelG, modelB, transformation, 1.0f);
-    for(auto &m : inBetweens) {
-        renderAxis(modelR, modelG, modelB, m, 0.2f);
+    if(appContext.chosenMode == AppContext::RobotMode)
+        robot.render(*appContext.phongShader);
+
+    if(appContext.chosenMode == AppContext::AxisMode) {
+        for(auto &m : inBetweens) {
+            renderAxis(m, 0.2f);
+        }
+        renderAxis(transformation, 1.0f);
+    } else {
+        auto m = glm::identity<glm::mat4>();
+        m = glm::translate(m, appContext.beginFrame.translation);
+        m = m * glm::toMat4(appContext.beginFrame.quaternion);
+        renderAxis(m, 0.2f);
+        m = glm::identity<glm::mat4>();
+        m = glm::translate(m, appContext.endFrame.translation);
+        m = m * glm::toMat4(appContext.endFrame.quaternion);
+        renderAxis(m, 0.2f);
     }
 
     glDisable(GL_CULL_FACE);
@@ -95,11 +112,26 @@ void Scene::render(FrameBufferManager &frameBufferManager, glm::mat4 transformat
 }
 
 void Scene::render() {
-    render(*appContext.frameBufferManagerLeft, appContext.leftTransformation, appContext.inBetweenTransformationsLeft);
-    render(*appContext.frameBufferManagerRight, appContext.rightTransformation, appContext.inBetweenTransformationsRight);
+    render(*appContext.frameBufferManagerLeft, appContext.leftTransformation, appContext.inBetweenTransformationsLeft, *appContext.robotL);
+    render(*appContext.frameBufferManagerRight, appContext.rightTransformation, appContext.inBetweenTransformationsRight, *appContext.robotR);
 }
 
-void Scene::renderAxis(glm::mat4 modelR, glm::mat4 modelG, glm::mat4 modelB, glm::mat4 transformation, float alpha) {
+void Scene::renderAxis(glm::mat4 transformation, float alpha) {
+
+    auto modelR = glm::identity<glm::mat4>();
+    modelR = glm::rotate(modelR, float(-std::numbers::pi/2), glm::vec3(0, 0, 1));
+    modelR = glm::scale(modelR, glm::vec3(.2, 1, .2));
+    modelR = glm::translate(modelR, glm::vec3(0, 0.5, 0));
+
+    auto modelG = glm::identity<glm::mat4>();
+    modelG = glm::scale(modelG, glm::vec3(.2, 1, .2));
+    modelG = glm::translate(modelG, glm::vec3(0, 0.5, 0));
+
+    auto modelB = glm::identity<glm::mat4>();
+    modelB = glm::rotate(modelB, float(std::numbers::pi/2), glm::vec3(1, 0, 0));
+    modelB = glm::scale(modelB, glm::vec3(.2, 1, .2));
+    modelB = glm::translate(modelB, glm::vec3(0, 0.5, 0));
+
     modelR = transformation * modelR;
     modelG = transformation * modelG;
     modelB = transformation * modelB;
