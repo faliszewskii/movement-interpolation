@@ -42,22 +42,32 @@ glm::quat Interpolation::slerp(float t, glm::quat a, glm::quat b)
     float rz = s0 * a.z + s1 * b.z;
     float rw = s0 * a.w + s1 * b.w;
     return glm::quat(rw, rx, ry, rz);
+}// Utility function to wrap an angle to the range (-pi, pi)
+double wrapAngle(double angle) {
+    while (angle <= -M_PI) angle += 2 * M_PI;
+    while (angle > M_PI) angle -= 2 * M_PI;
+    return angle;
 }
-double interpolateAngle(double start, double end, double t) {
-    const double TWO_PI = 360;
 
-    start = fmod(start, TWO_PI);
-    if (start < 0) start += TWO_PI;
+// Linear interpolation between two angles in the range (-pi, pi)
+double Interpolation::interpolateAngle(double angle1, double angle2, double t) {
+    // Ensure angles are in the range (-pi, pi)
+    angle1 = wrapAngle(angle1);
+    angle2 = wrapAngle(angle2);
 
-    end = fmod(end, TWO_PI);
-    if (end < 0) end += TWO_PI;
+    // Compute the difference, accounting for cyclic nature
+    double delta = angle2 - angle1;
+    if (delta > M_PI) {
+        delta -= 2 * M_PI;
+    } else if (delta < -M_PI) {
+        delta += 2 * M_PI;
+    }
 
-    double delta = end - start;
-    if (delta > 180) delta -= TWO_PI;
-    else if (delta < -180) delta += TWO_PI;
+    // Perform the interpolation
+    double result = angle1 + t * delta;
 
-    // Interpolate
-    return fmod(start + t * delta + TWO_PI, TWO_PI);  // Ensure the result is in [0, 2π)
+    // Wrap the result to (-pi, pi)
+    return wrapAngle(result);
 }
 
 template<>

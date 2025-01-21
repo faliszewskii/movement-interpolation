@@ -217,12 +217,12 @@ void Robot::interpolateParams(float t, Frame &beginFrame, Frame &endFrame) {
     float beta5 = angle5;
     float end = length2;
 
-    angle1 = Interpolation::lerp(t, alpha1, beta1);
-    angle2 = Interpolation::lerp(t, alpha2, beta2);
-    angle3 = Interpolation::lerp(t, alpha3, beta3);
-    angle4 = Interpolation::lerp(t, alpha4, beta4);
-    angle5 = Interpolation::lerp(t, alpha5, beta5);
-    length2 = Interpolation::lerp(t, start, end);
+    angle1 = Interpolation::interpolateAngle( alpha1, beta1, t);
+    angle2 = Interpolation::interpolateAngle( alpha2, beta2, t);
+    angle3 = Interpolation::interpolateAngle( alpha3, beta3, t);
+    angle4 = Interpolation::interpolateAngle( alpha4, beta4, t);
+    angle5 = Interpolation::interpolateAngle( alpha5, beta5, t);
+    length2 = Interpolation::interpolateAngle( start, end, t);
 
     while(angle1 < -std::numbers::pi) angle1 += 2 * std::numbers::pi;
     while(angle1 >= std::numbers::pi) angle1 -= 2 * std::numbers::pi;

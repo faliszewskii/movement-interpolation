@@ -20,6 +20,7 @@ public:
 
     template<typename T> static T lerp(float t, T start, T end);
     static glm::quat slerp(float t, glm::quat a, glm::quat b);
+    static double interpolateAngle(double start, double end, double t);
 private:
     glm::vec3 interpolateTranslation(float t, glm::vec3 begin, glm::vec3 end);
 
